@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Office Birds — Slingshot Test</title>
+  <title>Office Birds — Levels</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,26 +11,37 @@
     <header class="hud">
       <section class="hud-card hud-main">
         <div class="eyebrow">OFFICE BIRDS</div>
-        <h1>Constraint Slingshot Test</h1>
-        <p>Только настоящая рогатка: потяни шар назад и отпусти. Без камеры, башни и разрушений.</p>
+        <h1 id="level">1/3 — Разминка</h1>
+        <p>Сбей все цели за ограниченное число выстрелов.</p>
         <div class="stats">
-          <span>Выстрелы</span><b id="shots">0</b>
+          <span>Выстрелы осталось</span><b id="shots">0</b>
+          <span>Целей осталось</span><b id="targets">0</b>
           <span>Скорость</span><b id="speed">0</b>
           <span>Статус</span><b id="status">Готов</b>
         </div>
       </section>
 
       <section class="hud-card controls">
-        <button id="resetBtn" type="button">Reset</button>
+        <button id="resetBtn" type="button">Заново</button>
         <button id="debugBtn" type="button">Debug</button>
       </section>
     </header>
 
-    <canvas id="gameCanvas" aria-label="Тест рогатки"></canvas>
+    <canvas id="gameCanvas" aria-label="Игра Office Birds"></canvas>
     <div class="hint">Зажми шар → оттяни назад → отпусти</div>
+
+    <section id="result" class="result-card" aria-live="polite">
+      <div class="eyebrow">РЕЗУЛЬТАТ</div>
+      <h2 id="resultTitle">Уровень пройден!</h2>
+      <p id="resultText"></p>
+      <div class="result-actions">
+        <button id="retryBtn" type="button">Повторить</button>
+        <button id="nextBtn" type="button">Следующий уровень</button>
+      </div>
+    </section>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script type="module" src="src/slingshot-test.js"></script>
+  <script type="module" src="src/level-game.js"></script>
 </body>
 </html>
