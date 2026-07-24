@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Office Birds — Levels</title>
+  <title>Office Birds — Campaign</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,16 +12,19 @@
       <section class="hud-card hud-main">
         <div class="eyebrow">OFFICE BIRDS</div>
         <h1 id="level">1/3 — Разминка</h1>
-        <p>Сбей все цели за ограниченное число выстрелов.</p>
+        <div id="stars" class="hud-stars">☆☆☆</div>
+        <p>Сбей все цели и постарайся сохранить больше выстрелов.</p>
         <div class="stats">
           <span>Выстрелы осталось</span><b id="shots">0</b>
           <span>Целей осталось</span><b id="targets">0</b>
+          <span>Счёт</span><b id="score">0</b>
           <span>Скорость</span><b id="speed">0</b>
           <span>Статус</span><b id="status">Готов</b>
         </div>
       </section>
 
       <section class="hud-card controls">
+        <button id="menuBtn" type="button">Уровни</button>
         <button id="resetBtn" type="button">Заново</button>
         <button id="debugBtn" type="button">Debug</button>
       </section>
@@ -33,15 +36,27 @@
     <section id="result" class="result-card" aria-live="polite">
       <div class="eyebrow">РЕЗУЛЬТАТ</div>
       <h2 id="resultTitle">Уровень пройден!</h2>
+      <div id="resultStars" class="result-stars">★★★</div>
       <p id="resultText"></p>
       <div class="result-actions">
         <button id="retryBtn" type="button">Повторить</button>
         <button id="nextBtn" type="button">Следующий уровень</button>
       </div>
     </section>
+
+    <section id="levelMenu" class="level-menu show" aria-label="Выбор уровня">
+      <div class="menu-panel">
+        <div class="eyebrow">КАМПАНИЯ</div>
+        <h2>Выбор уровня</h2>
+        <p>Проходи уровни, улучшай рекорды и собирай звёзды.</p>
+        <div class="menu-summary">Всего звёзд: <b id="totalStars">0/9</b></div>
+        <div id="levelGrid" class="level-grid"></div>
+        <button id="closeMenuBtn" class="secondary-btn" type="button">Вернуться в игру</button>
+      </div>
+    </section>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script type="module" src="src/level-game.js"></script>
+  <script type="module" src="src/campaign-game.js"></script>
 </body>
 </html>
