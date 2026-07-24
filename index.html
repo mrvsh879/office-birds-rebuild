@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Office Birds Rebuild</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hud">
+      <section class="hud-card hud-main">
+        <div class="eyebrow">OFFICE BIRDS</div>
+        <h1>Physics Prototype</h1>
+        <p>Зажми героя, оттяни назад и отпусти. Сейчас проверяем только полёт, камеру и устойчивость башни.</p>
+        <div class="stats">
+          <span>Выстрелы</span><b id="shots">0</b>
+          <span>Скорость</span><b id="speed">0</b>
+          <span>Статус</span><b id="status">Готов</b>
+        </div>
+      </section>
+
+      <section class="hud-card controls">
+        <button id="resetBtn" type="button">Reset</button>
+        <button id="debugBtn" type="button">Debug</button>
+      </section>
+    </header>
+
+    <canvas id="gameCanvas" aria-label="Игровое поле"></canvas>
+
+    <div class="hint">Тяни героя назад • R — reset • D — debug</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
