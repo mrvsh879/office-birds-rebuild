@@ -98,6 +98,7 @@ function setupMouse() {
 }
 
 function loadLevel(index) {
+  engine.timing.timeScale=1;
   levelIndex=Math.max(0,Math.min(index,LEVELS.length-1));
   Composite.clear(engine.world,false); targets=[]; shotsUsed=0; score=0; levelFinished=false; result.classList.remove('show'); levelMenu.classList.remove('show');
   floorY=innerHeight-110; anchor={x:Math.max(320,innerWidth*.21),y:floorY-210}; const towerX=Math.max(innerWidth*.72,anchor.x+650);
