@@ -47,6 +47,7 @@ let shots = 0;
 let released = false;
 let detached = false;
 let respawnQueued = false;
+let target;
 
 function updateHud() {
   shotsEl.textContent = String(shots);
@@ -69,6 +70,7 @@ function createBallAndSling() {
       lineWidth: 4,
     },
   });
+  ball.gameType = "projectile";
 
   sling = Constraint.create({
     pointA: anchor,
@@ -86,13 +88,64 @@ function createBallAndSling() {
   setStatus("Потяни шар назад");
 }
 
+function createTower(floorY) {
+  const towerX = Math.max(innerWidth * 0.72, anchor.x + 620);
+  const beamW = 260;
+  const beamH = 30;
+  const pillarW = 34;
+  const pillarH = 120;
+
+  const makeBeam = (x, y, w, h, color, density = 0.0024) => {
+    const body = Bodies.rectangle(x, y, w, h, {
+      density,
+      friction: 0.72,
+      frictionStatic: 0.9,
+      frictionAir: 0.008,
+      restitution: 0.03,
+      chamfer: { radius: 5 },
+      render: {
+        fillStyle: color,
+        strokeStyle: "rgba(75,45,20,.75)",
+        lineWidth: 2,
+      },
+    });
+    body.gameType = "structure";
+    return body;
+  };
+
+  const baseY = floorY - 15;
+  const bodies = [
+    makeBeam(towerX, baseY, beamW, beamH, "#d79a55"),
+    makeBeam(towerX - 92, baseY - 75, pillarW, pillarH, "#b9773e", 0.0027),
+    makeBeam(towerX + 92, baseY - 75, pillarW, pillarH, "#b9773e", 0.0027),
+    makeBeam(towerX, baseY - 150, beamW, beamH, "#d79a55"),
+    makeBeam(towerX - 92, baseY - 225, pillarW, pillarH, "#b9773e", 0.0027),
+    makeBeam(towerX + 92, baseY - 225, pillarW, pillarH, "#b9773e", 0.0027),
+    makeBeam(towerX, baseY - 300, beamW, beamH, "#d79a55"),
+  ];
+
+  target = Bodies.circle(towerX, baseY - 350, 27, {
+    density: 0.0014,
+    friction: 0.28,
+    restitution: 0.08,
+    render: {
+      fillStyle: "#f0d4bd",
+      strokeStyle: "#71462f",
+      lineWidth: 3,
+    },
+  });
+  target.gameType = "target";
+  bodies.push(target);
+  World.add(engine.world, bodies);
+}
+
 function createScene(resetShots = true) {
   Composite.clear(engine.world, false);
 
   const floorY = innerHeight - 110;
-  anchor = { x: Math.max(320, innerWidth * 0.24), y: floorY - 210 };
+  anchor = { x: Math.max(320, innerWidth * 0.22), y: floorY - 210 };
 
-  const floor = Bodies.rectangle(innerWidth / 2, floorY + 45, innerWidth + 400, 90, {
+  const floor = Bodies.rectangle(innerWidth / 2, floorY + 45, innerWidth + 500, 90, {
     isStatic: true,
     friction: 1,
     render: { fillStyle: "#435462" },
@@ -100,6 +153,7 @@ function createScene(resetShots = true) {
 
   World.add(engine.world, floor);
   createBallAndSling();
+  createTower(floorY);
 
   const mouse = Mouse.create(canvas);
   mouse.pixelRatio = render.options.pixelRatio;
@@ -143,6 +197,22 @@ function resetBallOnly() {
   createBallAndSling();
 }
 
+Events.on(engine, "collisionStart", (event) => {
+  for (const pair of event.pairs) {
+    if (pair.bodyA !== ball && pair.bodyB !== ball) continue;
+    const other = pair.bodyA === ball ? pair.bodyB : pair.bodyA;
+    const relative = Vector.sub(pair.bodyA.velocity, pair.bodyB.velocity);
+    const normal = pair.collision?.normal || { x: 1, y: 0 };
+    const impactSpeed = Math.abs(Vector.dot(relative, normal));
+
+    if (other.gameType === "target" && impactSpeed > 2.5) {
+      setStatus("Цель сбита");
+    } else if (other.gameType === "structure" && impactSpeed > 2.5) {
+      setStatus("Попадание в башню");
+    }
+  }
+});
+
 Events.on(engine, "beforeUpdate", () => {
   if (!ball) return;
 
@@ -166,7 +236,7 @@ Events.on(engine, "beforeUpdate", () => {
     (ball.position.x > innerWidth + 250 || ball.position.y > innerHeight + 300 || ball.position.x < -250)
   ) {
     respawnQueued = true;
-    setTimeout(resetBallOnly, 350);
+    setTimeout(resetBallOnly, 500);
   }
 
   updateHud();
