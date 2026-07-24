@@ -14,6 +14,7 @@
         <h1 id="level">1/3 — Разминка</h1>
         <div id="stars" class="hud-stars">☆☆☆</div>
         <p>Сбей все цели и постарайся сохранить больше выстрелов.</p>
+        <div id="shotRack" class="shot-rack" aria-label="Оставшиеся снаряды"></div>
         <div class="stats">
           <span>Выстрелы осталось</span><b id="shots">0</b>
           <span>Целей осталось</span><b id="targets">0</b>
@@ -25,6 +26,7 @@
 
       <section class="hud-card controls">
         <button id="menuBtn" type="button">Уровни</button>
+        <button id="pauseBtn" type="button">Пауза</button>
         <button id="resetBtn" type="button">Заново</button>
         <button id="debugBtn" type="button">Debug</button>
       </section>
@@ -41,6 +43,18 @@
       <div class="result-actions">
         <button id="retryBtn" type="button">Повторить</button>
         <button id="nextBtn" type="button">Следующий уровень</button>
+      </div>
+    </section>
+
+    <section id="pausePanel" class="pause-panel" aria-live="polite">
+      <div class="menu-panel pause-box">
+        <div class="eyebrow">ПАУЗА</div>
+        <h2>Игра приостановлена</h2>
+        <div class="result-actions">
+          <button id="resumeBtn" type="button">Продолжить</button>
+          <button id="pauseRestartBtn" type="button">Начать заново</button>
+          <button id="pauseMenuBtn" type="button">К уровням</button>
+        </div>
       </div>
     </section>
 
