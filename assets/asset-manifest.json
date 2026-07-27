@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "generatedFor": "Office Birds",
+  "branch": "rebuild-v2-clean",
+  "atlases": {
+    "characters": {
+      "file": "assets/characters/office-birds-characters-atlas.webp",
+      "size": "1536x1024",
+      "contains": ["hero poses", "manager poses", "slingshot", "loaded slingshot"]
+    },
+    "materials": {
+      "file": "assets/materials/office-birds-materials-atlas.svg",
+      "size": "512x341",
+      "contains": ["wood beams", "wood pillars", "glass", "metal", "concrete"]
+    },
+    "props": {
+      "file": "assets/props/office-birds-props-atlas.webp",
+      "size": "256x171",
+      "contains": ["filing cabinet", "desk", "bookcase", "monitors", "printer", "chairs", "plants", "boxes", "water cooler"]
+    },
+    "ui": {
+      "file": "assets/ui/office-birds-ui-atlas.webp",
+      "size": "256x171",
+      "contains": ["navy-gold panels", "buttons", "stars", "counters", "progress bar", "icons"]
+    }
+  },
+  "note": "These are source atlases for the next integration stages. Physics and src/game.js were not changed by this asset upload."
+}
