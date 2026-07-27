@@ -16,20 +16,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate static project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f styles.css
+          test -f src/game.js
+          test -f assets/sprites/office-birds-vectors.svg
+          node --check src/game.js
+          grep -Fq 'styles.css?v=rebuild-v2-clean' index.html
+          grep -Fq 'src/game.js?v=rebuild-v2-clean' index.html
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare clean site artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp index.html styles.css _site/
+          cp -R src assets _site/
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
   deploy:
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload static site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
