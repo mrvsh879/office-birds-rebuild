@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Office Birds — Campaign</title>
-  <link rel="stylesheet" href="styles.css?v=20260727-visual-3" />
+  <link rel="stylesheet" href="styles.css?v=rebuild-v2-clean" />
 </head>
 <body>
   <div class="app-shell">
@@ -23,7 +23,6 @@
           <span>Статус</span><b id="status">Готов</b>
         </div>
       </section>
-
       <section class="hud-card controls">
         <button id="menuBtn" type="button">Уровни</button>
         <button id="pauseBtn" type="button">Пауза</button>
@@ -31,10 +30,8 @@
         <button id="debugBtn" type="button">Debug</button>
       </section>
     </header>
-
     <canvas id="gameCanvas" aria-label="Игра Office Birds"></canvas>
     <div class="hint">Зажми персонажа → оттяни назад → отпусти</div>
-
     <section id="result" class="result-card" aria-live="polite">
       <div class="eyebrow">РЕЗУЛЬТАТ</div>
       <h2 id="resultTitle">Уровень пройден!</h2>
@@ -45,7 +42,6 @@
         <button id="nextBtn" type="button">Следующий уровень</button>
       </div>
     </section>
-
     <section id="pausePanel" class="pause-panel" aria-live="polite">
       <div class="menu-panel pause-box">
         <div class="eyebrow">ПАУЗА</div>
@@ -57,7 +53,6 @@
         </div>
       </div>
     </section>
-
     <section id="levelMenu" class="level-menu show" aria-label="Выбор уровня">
       <div class="menu-panel">
         <div class="eyebrow">КАМПАНИЯ</div>
@@ -69,8 +64,7 @@
       </div>
     </section>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script type="module" src="src/visual-game.js?v=20260727-visual-3"></script>
+  <script type="module" src="src/game.js?v=rebuild-v2-clean"></script>
 </body>
 </html>
