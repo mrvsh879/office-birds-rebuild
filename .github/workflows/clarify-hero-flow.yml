@@ -1,0 +1,75 @@
+name: Clarify hero flow
+
+on:
+  push:
+    branches: [agent/initial-rebuild]
+    paths: [.github/workflows/clarify-hero-flow.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/initial-rebuild
+      - name: Patch hero reserve and next-shot timing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          game=Path('src/visual-game.js')
+          s=game.read_text()
+          if 'function reserveHeroes()' in s:
+              raise SystemExit(0)
+
+          s=s.replace(
+            "function remainingShots(){return Math.max(0,LEVELS[levelIndex].shots-shotsUsed)}",
+            "function remainingShots(){return Math.max(0,LEVELS[levelIndex].shots-shotsUsed)}\nfunction activeHeroReady(){return !!(ball&&!detached&&!respawnQueued)}\nfunction reserveHeroes(){return Math.max(0,remainingShots()-(activeHeroReady()?1:0))}"
+          )
+
+          s=s.replace(
+            "function updateHud(){levelEl.textContent=`${levelIndex+1}/${LEVELS.length} — ${LEVELS[levelIndex].name}`;shotsEl.textContent=remainingShots();",
+            "function updateHud(){levelEl.textContent=`${levelIndex+1}/${LEVELS.length} — ${LEVELS[levelIndex].name}`;shotsEl.textContent=`${remainingShots()} (${reserveHeroes()} в запасе)`;"
+          )
+
+          old="function drawHeroQueue(ctx){const activeWaiting=ball&&!detached&&!respawnQueued?1:0;const waiting=Math.max(0,remainingShots()-activeWaiting);if(!waiting)return;const spacing=58,startX=Math.max(70,anchor.x-120-(waiting-1)*spacing),y=floorY-42;for(let i=0;i<waiting;i++){const x=startX+i*spacing;if(!drawSprite(ctx,SPRITES.heroIdle,x,y,52,64,0)){ctx.save();ctx.fillStyle='#26364a';ctx.beginPath();ctx.arc(x,y-5,18,0,Math.PI*2);ctx.fill();ctx.restore()}ctx.save();ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(x,floorY-8,22,5,0,0,Math.PI*2);ctx.fill();ctx.restore()}}"
+          new="function drawHeroQueue(ctx){const waiting=reserveHeroes();if(!waiting)return;const spacing=58,startX=Math.max(70,anchor.x-120-(waiting-1)*spacing),y=floorY-42;for(let i=0;i<waiting;i++){const x=startX+i*spacing;if(!drawSprite(ctx,SPRITES.heroIdle,x,y,52,64,0)){ctx.save();ctx.fillStyle='#26364a';ctx.beginPath();ctx.arc(x,y-5,18,0,Math.PI*2);ctx.fill();ctx.restore()}ctx.save();ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(x,floorY-8,22,5,0,0,Math.PI*2);ctx.fill();ctx.restore()}}"
+          if old not in s: raise SystemExit('hero queue function not found')
+          s=s.replace(old,new)
+
+          s=s.replace(
+            "const outside=ball.position.x>innerWidth+220||ball.position.x<-220||ball.position.y>innerHeight+260,timeout=shotStartedAt&&performance.now()-shotStartedAt>6500;if(outside||lowSpeedFrames>24||timeout)queueProjectile()",
+            "const outside=ball.position.x>innerWidth+220||ball.position.x<-220||ball.position.y>innerHeight+260,timeout=shotStartedAt&&performance.now()-shotStartedAt>3800;if(outside||lowSpeedFrames>30||timeout)queueProjectile()"
+          )
+
+          s=s.replace(
+            "setStatus('Разрушения продолжаются…');setTimeout(()=>{",
+            "setStatus(reserveHeroes()>0?'Следующий герой через секунду…':'Последний бросок завершён');setTimeout(()=>{"
+          )
+
+          s=s.replace(
+            "},1400)}",
+            "},1100)}"
+          )
+
+          s=s.replace(
+            "resultText.textContent=`Счёт: ${finalScore}. Осталось запусков: ${remainingShots()}.`;",
+            "resultText.textContent=`Счёт: ${finalScore}. Осталось героев: ${remainingShots()}.`;"
+          )
+          s=s.replace("setStatus('Запуски закончились')","setStatus('Герои закончились')")
+
+          game.write_text(s)
+
+          index=Path('index.html')
+          html=index.read_text()
+          html=html.replace('<span>Героев осталось</span><b id="shots">0</b>','<span>Героев осталось</span><b id="shots">0</b>')
+          index.write_text(html)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/visual-game.js index.html
+          git commit -m "Clarify hero reserve and next throw timing" || exit 0
+          git push origin HEAD:agent/initial-rebuild
