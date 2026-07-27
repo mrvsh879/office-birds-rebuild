@@ -1,0 +1,68 @@
+name: Persist wood damage
+
+on:
+  push:
+    branches: [agent/initial-rebuild]
+    paths: [.github/workflows/persist-wood-damage.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/initial-rebuild
+      - name: Patch persistent damage state
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/visual-game.js')
+          s=p.read_text()
+          if 'const woodDamageLedger=new Map()' in s:
+              raise SystemExit(0)
+
+          s=s.replace(
+            "let particles=[],impactRings=[],flash=0,heroStunnedUntil=0;",
+            "let particles=[],impactRings=[],flash=0,heroStunnedUntil=0;\nconst woodDamageLedger=new Map();"
+          )
+
+          s=s.replace(
+            "function setupWood(b,kind,w,h){b.gameType='structure';b.material='wood';b.woodKind=kind;b.woodWidth=w;b.woodHeight=h;b.maxHealth=kind==='beam'?105:125;b.health=b.maxHealth;b.damageState=0;b.breakable=true;b.isSupport=kind==='pillar';return b}",
+            "function setupWood(b,kind,w,h){b.gameType='structure';b.material='wood';b.woodKind=kind;b.woodWidth=w;b.woodHeight=h;b.maxHealth=kind==='beam'?105:125;b.health=b.maxHealth;b.damageState=0;b.breakable=true;b.isSupport=kind==='pillar';woodDamageLedger.set(b.id,{health:b.health,damageState:0});return b}"
+          )
+
+          old="function updateWoodLook(body){const ratio=Math.max(0,body.health/body.maxHealth);const next=ratio>.66?0:ratio>.32?1:2;if(next===body.damageState)return;body.damageState=next;if(next===1){body.render.fillStyle=body.woodKind==='beam'?'#b96f31':'#965025';body.render.strokeStyle='#54270f'}else if(next===2){body.render.fillStyle=body.woodKind==='beam'?'#8e4e25':'#713918';body.render.strokeStyle='#321507';body.render.lineWidth=4}}"
+          new="function updateWoodLook(body){const ratio=Math.max(0,body.health/body.maxHealth);const next=ratio>.66?0:ratio>.32?1:2;body.damageState=next;if(next===0){body.render.fillStyle=body.woodKind==='beam'?'#c9823c':'#a95d2b';body.render.strokeStyle=body.woodKind==='beam'?'#6f3b18':'#5a2f16';body.render.lineWidth=3}else if(next===1){body.render.fillStyle=body.woodKind==='beam'?'#b96f31':'#965025';body.render.strokeStyle='#54270f';body.render.lineWidth=3}else{body.render.fillStyle=body.woodKind==='beam'?'#8e4e25':'#713918';body.render.strokeStyle='#321507';body.render.lineWidth=4}woodDamageLedger.set(body.id,{health:body.health,damageState:body.damageState})}\nfunction syncWoodDamage(){for(const b of Composite.allBodies(engine.world)){if(b.material!=='wood'||b.broken)continue;const saved=woodDamageLedger.get(b.id);if(saved){b.health=saved.health;b.damageState=saved.damageState}updateWoodLook(b)}}"
+          if old not in s: raise SystemExit('updateWoodLook not found')
+          s=s.replace(old,new)
+
+          s=s.replace(
+            "function damageWood(body,power,contact){if(!body||body.material!=='wood'||!body.breakable||body.broken)return;const damage=Math.max(0,(power-2.2)*10.5);if(damage<4)return;body.health-=damage;updateWoodLook(body);",
+            "function damageWood(body,power,contact){if(!body||body.material!=='wood'||!body.breakable||body.broken)return;const saved=woodDamageLedger.get(body.id);if(saved)body.health=saved.health;const damage=Math.max(0,(power-2.2)*10.5);if(damage<4)return;body.health=Math.max(0,body.health-damage);updateWoodLook(body);"
+          )
+
+          s=s.replace(
+            "function loadLevel(index){paused=false;engine.timing.timeScale=1;",
+            "function loadLevel(index){woodDamageLedger.clear();paused=false;engine.timing.timeScale=1;"
+          )
+
+          s=s.replace(
+            "function queueProjectile(){if(respawnQueued||levelFinished)return;respawnQueued=true;",
+            "function queueProjectile(){if(respawnQueued||levelFinished)return;syncWoodDamage();respawnQueued=true;"
+          )
+
+          s=s.replace(
+            "Events.on(engine,'beforeUpdate',()=>{if(!ball)return;",
+            "Events.on(engine,'beforeUpdate',()=>{syncWoodDamage();if(!ball)return;"
+          )
+
+          p.write_text(s)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/visual-game.js
+          git commit -m "Keep wood damage between projectile launches" || exit 0
+          git push origin HEAD:agent/initial-rebuild
