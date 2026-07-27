@@ -1,0 +1,21 @@
+name: Apply metal patch
+on:
+  push:
+    branches: [agent/initial-rebuild]
+    paths: [.github/workflows/apply-metal-patch.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/initial-rebuild
+      - run: python3 tools/apply_metal_patch.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/visual-game.js
+          git commit -m "Add heavy metal elements and impact effects" || exit 0
+          git push origin HEAD:agent/initial-rebuild
