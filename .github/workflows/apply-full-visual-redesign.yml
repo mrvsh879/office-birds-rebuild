@@ -1,0 +1,24 @@
+name: Apply full visual redesign
+
+on:
+  push:
+    branches: [agent/initial-rebuild]
+    paths: [.github/workflows/apply-full-visual-redesign.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/initial-rebuild
+      - run: python3 tools/apply_full_visual_redesign.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/visual-game.js
+          git commit -m "Apply polished Office Birds visual redesign" || exit 0
+          git push origin HEAD:agent/initial-rebuild
