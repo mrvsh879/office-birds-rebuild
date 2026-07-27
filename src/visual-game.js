@@ -18,6 +18,9 @@ const LEVELS=[
 ];
 
 const SPRITES={heroIdle:0,heroTension:1,heroFlying:2,heroStunned:3,bossIdle:4,bossSmug:5,bossPanic:6,bossDefeated:7};
+const officeBirdAtlas=new Image();
+officeBirdAtlas.src='./assets/sprites/office-birds-sprites.webp';
+window.officeBirdAtlas=officeBirdAtlas;
 let progress=loadProgress(),levelIndex=0,ball,sling,mouseConstraint,anchor,shotsUsed=0,released=false,detached=false,respawnQueued=false,targets=[],levelFinished=false,floorY=0,levelStartTime=0,score=0,lowSpeedFrames=0,shotStartedAt=0,paused=false;
 let particles=[],impactRings=[],flash=0,heroStunnedUntil=0;
 
