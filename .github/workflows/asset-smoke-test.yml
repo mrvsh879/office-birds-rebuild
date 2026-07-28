@@ -80,3 +80,4 @@ jobs:
             office-birds-smoke.png
             smoke-result.json
             /tmp/office-birds-server.log
+# rerun after world shadow fix
