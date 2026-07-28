@@ -141,22 +141,6 @@
       width,
       height,
     );
-
-    if (imageReady(slingshotEmpty)) {
-      const floorY = height - 110;
-      const anchorX = Math.max(320, width * 0.21);
-      drawContained(
-        ctx,
-        slingshotEmpty,
-        [546, 245, 444, 515],
-        anchorX - 116,
-        floorY - 242,
-        232,
-        268,
-        0,
-      );
-    }
-
     ctx.restore();
   }
 
