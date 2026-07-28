@@ -128,7 +128,7 @@
     ctx.fillStyle = 'rgba(39,25,12,.14)';
     for (const b of bodies) if (['structure', 'glass', 'metal', 'concrete', 'officeProp'].includes(b.gameType)) {
       const { w } = size(b);
-      ctx.beginPath(); ctx.ellipse(b.position.x, floorY - 6, Math.max(18, w * .4), 7, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(b.position.x, floorY - 6, Math.max(18, w * .4), 7, 0, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
 
