@@ -2,7 +2,7 @@
   const prototype = window.officeBirdsModernPrototype;
   if (!prototype || prototype.stabilityPatchInstalled) return;
 
-  const { Body, Composite, Constraint, Events, Vector, World } = Matter;
+  const { Body, Composite, Constraint, Vector, World } = Matter;
   const originalInstall = prototype.install.bind(prototype);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const joinable = (body) => ['structure', 'glass', 'metal', 'concrete'].includes(body?.gameType);
@@ -71,18 +71,27 @@
     World.add(engine.world, joint);
   }
 
-  function releaseHeldStructure() {
+  function releaseImpactZone(body, radius) {
     const state = prototype.state;
-    if (!state.structureHeld) return;
-    state.structureHeld = false;
+    if (!body) return;
 
-    for (const body of state.heldBodies || []) {
-      if (!body || body.modernFoundation) continue;
-      Body.setStatic(body, false);
-      Body.setVelocity(body, { x: 0, y: 0 });
-      Body.setAngularVelocity(body, 0);
+    const releasedBodies = new Set();
+    for (const candidate of Composite.allBodies(engine.world)) {
+      if (!isStructuralBody(candidate) || candidate.modernFoundation) continue;
+      const distance = Vector.magnitude(Vector.sub(candidate.position, body.position));
+      if (candidate !== body && distance > radius) continue;
+
+      if (candidate.isStatic) {
+        Body.setStatic(candidate, false);
+        Body.setVelocity(candidate, { x: 0, y: 0 });
+        Body.setAngularVelocity(candidate, 0);
+      }
+      candidate.structureFrozen = false;
+      releasedBodies.add(candidate);
     }
-    state.heldBodies = [];
+
+    state.heldBodies = (state.heldBodies || []).filter((candidate) => !releasedBodies.has(candidate));
+    state.structureHeld = state.heldBodies.length > 0;
   }
 
   function installStablePhysics() {
@@ -117,15 +126,9 @@
       }
     };
 
-    activateStructure = function activateStableStructure(body, radius = 110) {
+    activateStructure = function activateOnlyImpactZone(body, radius = 110) {
       if (!body) return;
-      if (state.structureHeld && ball?.launchCounted) releaseHeldStructure();
-      for (const candidate of Composite.allBodies(engine.world)) {
-        if (!isStructuralBody(candidate) || candidate.modernFoundation) continue;
-        if (candidate === body || Vector.magnitude(Vector.sub(candidate.position, body.position)) <= radius) {
-          if (candidate.isStatic) Body.setStatic(candidate, false);
-        }
-      }
+      releaseImpactZone(body, radius);
     };
 
     releaseJointsFor = function releaseStableJoints(body, radius = 0) {
@@ -134,16 +137,13 @@
       for (let index = state.joints.length - 1; index >= 0; index -= 1) {
         const joint = state.joints[index];
         const connected = joint.bodyA === body || joint.bodyB === body;
-        const near = !connected && Vector.magnitude(Vector.sub(joint.bodyA.position, body.position)) < effectiveRadius;
-        if (!connected && !near) continue;
+        const nearA = Vector.magnitude(Vector.sub(joint.bodyA.position, body.position)) < effectiveRadius;
+        const nearB = Vector.magnitude(Vector.sub(joint.bodyB.position, body.position)) < effectiveRadius;
+        if (!connected && !nearA && !nearB) continue;
         World.remove(engine.world, joint);
         state.joints.splice(index, 1);
       }
     };
-
-    Events.on(engine, 'beforeUpdate', () => {
-      if (state.structureHeld && ball?.launchCounted && released) releaseHeldStructure();
-    });
   }
 
   prototype.install = function installStableModernPrototype() {
