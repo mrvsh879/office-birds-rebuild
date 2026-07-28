@@ -39,22 +39,24 @@ jobs:
           const started=Date.now();
           const response=await page.goto('http://127.0.0.1:4173',{waitUntil:'domcontentloaded'});
           if(!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
-          const initiallyHidden=await page.evaluate(()=>getComputedStyle(document.querySelector('.app-shell')).opacity==='0');
+          const initiallyHidden=await page.evaluate(()=>document.body.classList.contains('is-loading'));
           await page.waitForFunction(()=>document.body.classList.contains('is-ready'),null,{timeout:20000});
+          await page.waitForFunction(()=>!document.getElementById('loadingScreen'),null,{timeout:3000});
           const readyMs=Date.now()-started;
           const state=await page.evaluate(()=>({
-            loadingGone:!document.getElementById('loadingScreen'),
             appOpacity:getComputedStyle(document.querySelector('.app-shell')).opacity,
             worldInstalled:Boolean(window.officeBirdsWorldAssets?.installed),
             remainingInstalled:Boolean(window.officeBirdsRemainingAssets?.installed),
+            failures:document.body.dataset.assetLoadFailures,
             buttonImage:getComputedStyle(document.querySelector('#menuBtn')).backgroundImage,
             hudImage:getComputedStyle(document.querySelector('.hud-main')).backgroundImage,
           }));
           await page.screenshot({path:'loading-fix.png',fullPage:true});
           console.log(JSON.stringify({initiallyHidden,readyMs,state,errors},null,2));
-          if(!initiallyHidden) throw new Error('App was visible before assets were ready');
-          if(!state.loadingGone||state.appOpacity==='0') throw new Error('Loading screen did not finish correctly');
+          if(!initiallyHidden) throw new Error('Loading state was not active initially');
+          if(state.appOpacity==='0') throw new Error('App stayed hidden after loading');
           if(!state.worldInstalled||!state.remainingInstalled) throw new Error('Asset layers were not installed');
+          if(state.failures!=='0') throw new Error(`Asset failures: ${state.failures}`);
           if(!state.buttonImage.includes('ui-action-button.png')) throw new Error('PNG button skin not applied');
           if(!state.hudImage.includes('ui-hud-panel.png')) throw new Error('PNG HUD skin not applied');
           if(errors.length) throw new Error(errors.join('\n'));
