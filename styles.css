@@ -2,8 +2,13 @@
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07101c}
 body{user-select:none;-webkit-user-select:none}button{font:inherit}
-.app-shell{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#9edcff 0%,#eaf6ff 60%,#d9c6a3 60.2%,#9f744d 100%)}
+.app-shell{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#9edcff 0%,#eaf6ff 60%,#d9c6a3 60.2%,#9f744d 100%);opacity:1;transition:opacity .25s ease}
+body.is-loading .app-shell{opacity:0;pointer-events:none}
 #gameCanvas{display:block;width:100%;height:100%;touch-action:none}
+.loading-screen{position:fixed;z-index:9999;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#123c68 0,#081f3c 45%,#041326 100%);color:#fff;transition:opacity .28s ease}
+.loading-screen.is-hidden{opacity:0;pointer-events:none}
+.loading-card{width:min(420px,calc(100vw - 36px));padding:30px;border-radius:24px;background:rgba(4,25,51,.94);border:3px solid #132d49;box-shadow:0 0 0 2px var(--gold),0 24px 70px rgba(0,0,0,.42);text-align:center}
+.loading-card strong{display:block;font-size:28px;margin-bottom:8px}.loading-card span{display:block;color:rgba(255,255,255,.82);font-weight:800}.loading-track{height:16px;margin-top:20px;border-radius:999px;overflow:hidden;background:#031226;border:2px solid #274763}.loading-bar{height:100%;width:0;background:linear-gradient(90deg,#f0a719,#ffd766);transition:width .16s ease}
 .hud{position:fixed;z-index:20;top:14px;left:14px;right:14px;display:flex;gap:14px;align-items:flex-start;pointer-events:none}
 .hud-card{pointer-events:auto;border:3px solid #132d49;background:linear-gradient(145deg,rgba(3,24,50,.97),rgba(5,43,79,.95));box-shadow:0 0 0 2px var(--gold),0 10px 0 rgba(2,13,28,.35),0 22px 55px rgba(3,20,38,.35),inset 0 1px rgba(255,255,255,.12);border-radius:22px;color:#fff}
 .hud-main{width:min(470px,calc(100vw - 28px));padding:18px 22px 20px}.eyebrow{font-size:12px;font-weight:950;letter-spacing:.18em;color:var(--gold2);text-shadow:0 2px 0 rgba(0,0,0,.35)}
