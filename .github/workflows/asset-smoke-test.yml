@@ -1,0 +1,71 @@
+name: Asset smoke test
+
+on:
+  pull_request:
+    branches:
+      - rebuild-v2-clean
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/art-layer.js
+          node --check src/game.js
+          node --check src/world-assets.js
+      - name: Install browser
+        run: |
+          npm init -y
+          npm install playwright@1.54.1
+          npx playwright install --with-deps chromium
+      - name: Run browser smoke test
+        run: |
+          python3 -m http.server 4173 > /tmp/office-birds-server.log 2>&1 &
+          cat > /tmp/smoke.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+          const errors = [];
+          page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
+          page.on('console', message => {
+            if (message.type() === 'error') errors.push(`console: ${message.text()}`);
+          });
+          const response = await page.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
+          if (!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
+          await page.waitForTimeout(2500);
+          const state = await page.evaluate(() => ({
+            hasMatter: Boolean(window.Matter),
+            artInstalled: Boolean(window.officeBirdsArt?.overridesInstalled),
+            worldInstalled: Boolean(window.officeBirdsWorldAssets?.installed),
+            canvasWidth: document.querySelector('#gameCanvas')?.width || 0,
+            canvasHeight: document.querySelector('#gameCanvas')?.height || 0,
+            levelText: document.querySelector('#level')?.textContent || '',
+            assetCount: Object.keys(window.officeBirdsWorldAssets?.assets || {}).length,
+            loadedAssets: Object.values(window.officeBirdsWorldAssets?.assets || {}).filter(asset => asset.image?.complete && asset.image?.naturalWidth > 0).length,
+          }));
+          console.log(JSON.stringify({ state, errors }, null, 2));
+          if (!state.hasMatter) throw new Error('Matter.js did not load');
+          if (!state.artInstalled) throw new Error('Character art layer not installed');
+          if (!state.worldInstalled) throw new Error('World asset layer not installed');
+          if (!state.canvasWidth || !state.canvasHeight) throw new Error('Canvas was not initialized');
+          if (!state.levelText.includes('/3')) throw new Error(`Unexpected level text: ${state.levelText}`);
+          if (state.assetCount < 20) throw new Error(`Too few registered assets: ${state.assetCount}`);
+          if (state.loadedAssets !== state.assetCount) throw new Error(`Only ${state.loadedAssets}/${state.assetCount} assets loaded`);
+          if (errors.length) throw new Error(errors.join('\n'));
+          await page.screenshot({ path: 'office-birds-smoke.png', fullPage: true });
+          await browser.close();
+          EOF
+          node /tmp/smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: office-birds-smoke
+          path: |
+            office-birds-smoke.png
+            /tmp/office-birds-server.log
