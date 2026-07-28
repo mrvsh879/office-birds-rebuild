@@ -1,76 +1,66 @@
 (() => {
   const makeAsset = (src) => {
-    const asset = { image: new Image(), crop: null };
-    asset.image.decoding = 'async';
-    asset.image.src = src;
-    const trim = () => {
-      if (!asset.image.complete || !asset.image.naturalWidth || asset.crop) return;
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = asset.image.naturalWidth;
-        canvas.height = asset.image.naturalHeight;
-        const context = canvas.getContext('2d', { willReadFrequently: true });
-        context.drawImage(asset.image, 0, 0);
-        const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
-        let left = width, top = height, right = -1, bottom = -1;
-        for (let y = 0; y < height; y += 2) for (let x = 0; x < width; x += 2) {
-          if (data[(y * width + x) * 4 + 3] < 24) continue;
-          left = Math.min(left, x); top = Math.min(top, y);
-          right = Math.max(right, x); bottom = Math.max(bottom, y);
-        }
-        if (right >= left && bottom >= top) {
-          const pad = 5;
-          left = Math.max(0, left - pad); top = Math.max(0, top - pad);
-          right = Math.min(width - 1, right + pad); bottom = Math.min(height - 1, bottom + pad);
-          asset.crop = [left, top, right - left + 1, bottom - top + 1];
-        }
-      } catch (_) {
-        asset.crop = [0, 0, asset.image.naturalWidth, asset.image.naturalHeight];
-      }
-    };
-    asset.image.addEventListener('load', trim, { once: true });
-    trim();
-    return asset;
+    const image = new Image();
+    image.decoding = 'async';
+    image.src = src;
+    return { src, image };
   };
 
   const loadedSlingshot = makeAsset('./assets/props/slingshots/slingshot-loaded.png');
   const brokenGlass = makeAsset('./assets/materials/glass/glass-panel-broken.png');
-  const ready = (asset) => asset.image.complete && asset.image.naturalWidth > 0;
-  const crop = (asset) => asset.crop || [0, 0, asset.image.naturalWidth, asset.image.naturalHeight];
+  const ready = (asset) => asset?.image.complete && asset.image.naturalWidth > 0;
 
   function drawContained(ctx, asset, x, y, width, height) {
     if (!ready(asset)) return false;
-    const [sx, sy, sw, sh] = crop(asset);
+    const sw = asset.image.naturalWidth;
+    const sh = asset.image.naturalHeight;
     const scale = Math.min(width / sw, height / sh);
-    const dw = sw * scale, dh = sh * scale;
-    ctx.drawImage(asset.image, sx, sy, sw, sh, x + (width - dw) / 2, y + (height - dh) / 2, dw, dh);
+    const dw = sw * scale;
+    const dh = sh * scale;
+    ctx.drawImage(asset.image, 0, 0, sw, sh, x + (width - dw) / 2, y + (height - dh) / 2, dw, dh);
     return true;
   }
 
   function installUiSkin() {
+    document.getElementById('office-birds-png-ui-skin')?.remove();
     const style = document.createElement('style');
     style.id = 'office-birds-png-ui-skin';
     style.textContent = `
       .hud-card {
-        background-image:
-          linear-gradient(145deg,rgba(3,24,50,.9),rgba(5,43,79,.86)),
-          url('./assets/ui/panels/ui-hud-panel.png');
-        background-size:100% 100%,100% 100%;
-        background-position:center;
-        background-repeat:no-repeat;
+        background-color:#082b50 !important;
+        background-image:url('./assets/ui/panels/ui-hud-panel.png') !important;
+        background-size:100% 100% !important;
+        background-position:center !important;
+        background-repeat:no-repeat !important;
+        border:0 !important;
+        box-shadow:0 18px 42px rgba(2,15,30,.3) !important;
       }
       button {
-        background-image:
-          linear-gradient(180deg,rgba(18,61,104,.78),rgba(8,41,77,.82)),
-          url('./assets/ui/buttons/ui-action-button.png');
-        background-size:100% 100%,100% 100%;
-        background-position:center;
-        background-repeat:no-repeat;
+        background-color:transparent !important;
+        background-image:url('./assets/ui/buttons/ui-action-button.png') !important;
+        background-size:100% 100% !important;
+        background-position:center !important;
+        background-repeat:no-repeat !important;
+        border:0 !important;
+        box-shadow:none !important;
+        min-height:48px;
+        padding:12px 22px !important;
       }
       button:hover:not(:disabled) {
-        background-image:
-          linear-gradient(180deg,rgba(25,77,126,.7),rgba(11,51,93,.76)),
-          url('./assets/ui/buttons/ui-action-button.png');
+        background-image:url('./assets/ui/buttons/ui-action-button.png') !important;
+        filter:brightness(1.12);
+      }
+      button:active:not(:disabled) {
+        background-image:url('./assets/ui/buttons/ui-action-button.png') !important;
+        filter:brightness(.92);
+        transform:translateY(2px);
+      }
+      .controls {
+        background-color:transparent !important;
+        background-image:none !important;
+        border:0 !important;
+        box-shadow:none !important;
+        padding:0 !important;
       }
     `;
     document.head.appendChild(style);
@@ -122,7 +112,6 @@
           previousDrawSlingshot(ctx);
           return;
         }
-
         loadedCompositionVisible = true;
         ctx.save();
         ctx.shadowColor = 'rgba(27,17,9,.34)';
