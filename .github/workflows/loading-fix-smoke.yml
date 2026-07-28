@@ -30,38 +30,46 @@ jobs:
         run: |
           python3 -m http.server 4173 >/tmp/server.log 2>&1 &
           cat > smoke.mjs <<'EOF'
+          import fs from 'node:fs';
           import { chromium } from 'playwright';
-          const browser = await chromium.launch({headless:true});
-          const page = await browser.newPage({viewport:{width:1440,height:900}});
-          const errors=[];
-          page.on('pageerror',e=>errors.push(`pageerror:${e.message}`));
-          page.on('console',m=>{if(m.type()==='error')errors.push(`console:${m.text()}`)});
-          const started=Date.now();
-          const response=await page.goto('http://127.0.0.1:4173',{waitUntil:'domcontentloaded'});
-          if(!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
-          const initiallyHidden=await page.evaluate(()=>document.body.classList.contains('is-loading'));
-          await page.waitForFunction(()=>document.body.classList.contains('is-ready'),null,{timeout:20000});
-          await page.waitForFunction(()=>!document.getElementById('loadingScreen'),null,{timeout:3000});
-          const readyMs=Date.now()-started;
-          const state=await page.evaluate(()=>({
-            appOpacity:getComputedStyle(document.querySelector('.app-shell')).opacity,
-            worldInstalled:Boolean(window.officeBirdsWorldAssets?.installed),
-            remainingInstalled:Boolean(window.officeBirdsRemainingAssets?.installed),
-            failures:document.body.dataset.assetLoadFailures,
-            buttonImage:getComputedStyle(document.querySelector('#menuBtn')).backgroundImage,
-            hudImage:getComputedStyle(document.querySelector('.hud-main')).backgroundImage,
-          }));
-          await page.screenshot({path:'loading-fix.png',fullPage:true});
-          console.log(JSON.stringify({initiallyHidden,readyMs,state,errors},null,2));
-          if(!initiallyHidden) throw new Error('Loading state was not active initially');
-          if(state.appOpacity==='0') throw new Error('App stayed hidden after loading');
-          if(!state.worldInstalled||!state.remainingInstalled) throw new Error('Asset layers were not installed');
-          if(state.failures!=='0') throw new Error(`Asset failures: ${state.failures}`);
-          if(!state.buttonImage.includes('ui-action-button.png')) throw new Error('PNG button skin not applied');
-          if(!state.hudImage.includes('ui-hud-panel.png')) throw new Error('PNG HUD skin not applied');
-          if(errors.length) throw new Error(errors.join('\n'));
-          if(readyMs>15000) throw new Error(`Asset loading is still too slow: ${readyMs}ms`);
-          await browser.close();
+          let browser;
+          const report={initiallyHidden:null,readyMs:null,state:null,errors:[],fatal:null};
+          try{
+            browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:900}});
+            page.on('pageerror',e=>report.errors.push(`pageerror:${e.message}`));
+            page.on('console',m=>{if(m.type()==='error')report.errors.push(`console:${m.text()}`)});
+            const started=Date.now();
+            const response=await page.goto('http://127.0.0.1:4173',{waitUntil:'domcontentloaded'});
+            if(!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
+            report.initiallyHidden=await page.evaluate(()=>document.body.classList.contains('is-loading'));
+            await page.waitForFunction(()=>document.body.classList.contains('is-ready'),null,{timeout:20000});
+            await page.waitForFunction(()=>!document.getElementById('loadingScreen'),null,{timeout:3000});
+            report.readyMs=Date.now()-started;
+            report.state=await page.evaluate(()=>({
+              appOpacity:getComputedStyle(document.querySelector('.app-shell')).opacity,
+              worldInstalled:Boolean(window.officeBirdsWorldAssets?.installed),
+              remainingInstalled:Boolean(window.officeBirdsRemainingAssets?.installed),
+              failures:document.body.dataset.assetLoadFailures,
+              buttonImage:getComputedStyle(document.querySelector('#menuBtn')).backgroundImage,
+              hudImage:getComputedStyle(document.querySelector('.hud-main')).backgroundImage,
+            }));
+            await page.screenshot({path:'loading-fix.png',fullPage:true});
+            const s=report.state;
+            if(!report.initiallyHidden) throw new Error('Loading state was not active initially');
+            if(s.appOpacity==='0') throw new Error('App stayed hidden after loading');
+            if(!s.worldInstalled||!s.remainingInstalled) throw new Error('Asset layers were not installed');
+            if(s.failures!=='0') throw new Error(`Asset failures: ${s.failures}`);
+            if(!s.buttonImage.includes('ui-action-button.png')) throw new Error('PNG button skin not applied');
+            if(!s.hudImage.includes('ui-hud-panel.png')) throw new Error('PNG HUD skin not applied');
+            if(report.errors.length) throw new Error(report.errors.join('\n'));
+            if(report.readyMs>15000) throw new Error(`Asset loading is still too slow: ${report.readyMs}ms`);
+          }catch(error){report.fatal=error?.stack||String(error)}finally{
+            fs.writeFileSync('smoke-result.json',JSON.stringify(report,null,2));
+            if(browser)await browser.close();
+          }
+          console.log(JSON.stringify(report,null,2));
+          if(report.fatal)process.exit(1);
           EOF
           node smoke.mjs
       - uses: actions/upload-artifact@v4
@@ -70,4 +78,5 @@ jobs:
           name: loading-fix-smoke
           path: |
             loading-fix.png
+            smoke-result.json
             /tmp/server.log
