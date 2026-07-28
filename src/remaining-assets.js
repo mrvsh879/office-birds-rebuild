@@ -26,16 +26,71 @@
     const style = document.createElement('style');
     style.id = 'office-birds-png-ui-skin';
     style.textContent = `
-      .hud-card {
-        background-color:#082b50 !important;
-        background-image:url('./assets/ui/panels/ui-hud-panel.png') !important;
-        background-size:100% 100% !important;
-        background-position:center !important;
-        background-repeat:no-repeat !important;
-        border:0 !important;
+      .hud-main {
+        width:min(520px,calc(100vw - 28px)) !important;
+        min-height:0 !important;
+        padding:2px 6px 5px !important;
+        background:#071d36 !important;
+        background-image:none !important;
+        border-style:solid !important;
+        border-width:32px 42px 30px !important;
+        border-image-source:url('./assets/ui/panels/ui-hud-panel.png') !important;
+        border-image-slice:82 120 76 120 fill !important;
+        border-image-width:32px 42px 30px !important;
+        border-image-repeat:stretch !important;
+        border-radius:18px !important;
         box-shadow:0 18px 42px rgba(2,15,30,.3) !important;
+        overflow:hidden !important;
+      }
+      .hud-main .eyebrow {
+        font-size:10px !important;
+        line-height:1 !important;
+        margin:0 0 2px !important;
+      }
+      .hud-main h1 {
+        font-size:22px !important;
+        line-height:1.05 !important;
+        margin:2px 0 3px !important;
+      }
+      .hud-main .hud-stars {
+        font-size:19px !important;
+        line-height:1 !important;
+        margin:2px 0 5px !important;
+      }
+      .hud-main p {
+        font-size:12px !important;
+        line-height:1.25 !important;
+        margin:0 !important;
+      }
+      .hud-main .shot-rack {
+        min-height:18px !important;
+        margin-top:6px !important;
+        gap:6px !important;
+      }
+      .hud-main .shot-dot {
+        width:18px !important;
+        height:18px !important;
+      }
+      .hud-main .stats {
+        gap:4px 14px !important;
+        margin-top:7px !important;
+        padding-top:7px !important;
+        font-size:12px !important;
+        line-height:1.15 !important;
+      }
+      .controls {
+        background:transparent !important;
+        background-image:none !important;
+        border:0 !important;
+        box-shadow:none !important;
+        padding:0 !important;
       }
       button {
+        display:inline-grid !important;
+        place-items:center !important;
+        min-height:48px !important;
+        padding:1px 22px 0 !important;
+        line-height:1 !important;
         background-color:transparent !important;
         background-image:url('./assets/ui/buttons/ui-action-button.png') !important;
         background-size:100% 100% !important;
@@ -43,8 +98,6 @@
         background-repeat:no-repeat !important;
         border:0 !important;
         box-shadow:none !important;
-        min-height:48px;
-        padding:12px 22px !important;
       }
       button:hover:not(:disabled) {
         background-image:url('./assets/ui/buttons/ui-action-button.png') !important;
@@ -55,12 +108,15 @@
         filter:brightness(.92);
         transform:translateY(2px);
       }
-      .controls {
-        background-color:transparent !important;
-        background-image:none !important;
-        border:0 !important;
-        box-shadow:none !important;
-        padding:0 !important;
+      @media(max-width:760px) {
+        .hud-main {
+          width:calc(100vw - 16px) !important;
+          border-width:24px 28px 22px !important;
+          border-image-width:24px 28px 22px !important;
+          padding:0 3px 3px !important;
+        }
+        .hud-main h1 { font-size:18px !important; }
+        .hud-main .stats { font-size:11px !important; }
       }
     `;
     document.head.appendChild(style);
