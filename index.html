@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Office Birds — Campaign</title>
-  <link rel="stylesheet" href="styles.css?v=hud-align-v1" />
+  <link rel="stylesheet" href="styles.css?v=modern-prototype-v1" />
 </head>
 <body class="is-loading">
   <section id="loadingScreen" class="loading-screen" aria-live="polite">
@@ -73,15 +73,17 @@
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script src="src/preloader.js?v=hud-align-v1"></script>
-  <script src="src/art-layer.js?v=hud-align-v1"></script>
-  <script src="src/game.js?v=hud-align-v1"></script>
-  <script src="src/world-assets.js?v=hud-align-v1"></script>
-  <script src="src/remaining-assets.js?v=hud-align-v1"></script>
+  <script src="src/preloader.js?v=modern-prototype-v1"></script>
+  <script src="src/art-layer.js?v=modern-prototype-v1"></script>
+  <script src="src/game.js?v=modern-prototype-v1"></script>
+  <script src="src/world-assets.js?v=modern-prototype-v1"></script>
+  <script src="src/remaining-assets.js?v=modern-prototype-v1"></script>
+  <script src="src/modern-prototype.js?v=modern-prototype-v1"></script>
   <script>
     window.officeBirdsArt?.installGameplayOverrides();
     window.officeBirdsWorldAssets?.install();
     window.officeBirdsRemainingAssets?.install();
+    window.officeBirdsModernPrototype?.install();
     window.officeBirdsPreloader?.waitForAssets();
   </script>
 </body>
