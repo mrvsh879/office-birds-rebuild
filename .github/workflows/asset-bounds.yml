@@ -1,0 +1,57 @@
+name: Asset bounds analysis
+
+on:
+  pull_request:
+    branches:
+      - rebuild-v2-clean
+
+jobs:
+  bounds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Analyze PNG alpha bounds
+        run: |
+          pip install pillow
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import json
+
+          roots = [
+              Path('assets/materials'),
+              Path('assets/props'),
+              Path('assets/effects'),
+              Path('assets/ui'),
+          ]
+          result = {}
+          for root in roots:
+              for path in sorted(root.rglob('*.png')):
+                  image = Image.open(path).convert('RGBA')
+                  alpha = image.getchannel('A')
+                  bbox = alpha.point(lambda value: 255 if value > 24 else 0).getbbox()
+                  if bbox:
+                      left, top, right, bottom = bbox
+                      pad = 5
+                      left = max(0, left-pad)
+                      top = max(0, top-pad)
+                      right = min(image.width, right+pad)
+                      bottom = min(image.height, bottom+pad)
+                      crop = [left, top, right-left, bottom-top]
+                  else:
+                      crop = [0, 0, image.width, image.height]
+                  result[str(path)] = {
+                      'size': [image.width, image.height],
+                      'crop': crop,
+                      'bytes': path.stat().st_size,
+                  }
+          Path('asset-bounds.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
+          print(json.dumps(result, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: asset-bounds
+          path: asset-bounds.json
