@@ -1,0 +1,94 @@
+name: All assets smoke test
+
+on:
+  pull_request:
+    branches:
+      - rebuild-v2-clean
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/art-layer.js
+          node --check src/game.js
+          node --check src/world-assets.js
+          node --check src/remaining-assets.js
+      - name: Install browser
+        run: |
+          npm init -y
+          npm install playwright@1.54.1
+          npx playwright install --with-deps chromium
+      - name: Run browser smoke test
+        run: |
+          python3 -m http.server 4173 > /tmp/office-birds-server.log 2>&1 &
+          cat > smoke.mjs <<'EOF'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          let browser;
+          const report = { state: null, errors: [], fatal: null };
+          try {
+            browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+            page.on('pageerror', error => report.errors.push(`pageerror: ${error.message}`));
+            page.on('console', message => { if (message.type() === 'error') report.errors.push(`console: ${message.text()}`); });
+            const response = await page.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
+            if (!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
+            await page.waitForTimeout(3000);
+            report.state = await page.evaluate(() => {
+              const world = window.officeBirdsWorldAssets;
+              const remaining = window.officeBirdsRemainingAssets;
+              const button = document.querySelector('#resetBtn');
+              const hud = document.querySelector('.hud-card');
+              return {
+                hasMatter: Boolean(window.Matter),
+                artInstalled: Boolean(window.officeBirdsArt?.overridesInstalled),
+                worldInstalled: Boolean(world?.installed),
+                remainingInstalled: Boolean(remaining?.installed),
+                worldCount: Object.keys(world?.assets || {}).length,
+                worldLoaded: Object.values(world?.assets || {}).filter(asset => asset.image?.complete && asset.image?.naturalWidth > 0).length,
+                remainingCount: Object.keys(remaining?.assets || {}).length,
+                remainingLoaded: Object.values(remaining?.assets || {}).filter(asset => asset.image?.complete && asset.image?.naturalWidth > 0).length,
+                canvasWidth: document.querySelector('#gameCanvas')?.width || 0,
+                canvasHeight: document.querySelector('#gameCanvas')?.height || 0,
+                levelText: document.querySelector('#level')?.textContent || '',
+                uiSkinPresent: Boolean(document.querySelector('#office-birds-png-ui-skin')),
+                buttonBackground: getComputedStyle(button).backgroundImage,
+                hudBackground: getComputedStyle(hud).backgroundImage,
+              };
+            });
+            await page.screenshot({ path: 'office-birds-all-assets.png', fullPage: true });
+            const s = report.state;
+            if (!s.hasMatter || !s.artInstalled || !s.worldInstalled || !s.remainingInstalled) throw new Error('One or more game layers did not install');
+            if (!s.canvasWidth || !s.canvasHeight) throw new Error('Canvas did not initialize');
+            if (!s.levelText.includes('/3')) throw new Error(`Unexpected level text: ${s.levelText}`);
+            if (s.worldLoaded !== s.worldCount) throw new Error(`World assets loaded ${s.worldLoaded}/${s.worldCount}`);
+            if (s.remainingLoaded !== s.remainingCount) throw new Error(`Remaining assets loaded ${s.remainingLoaded}/${s.remainingCount}`);
+            if (!s.uiSkinPresent) throw new Error('PNG UI skin style was not installed');
+            if (!s.buttonBackground.includes('ui-action-button.png')) throw new Error('Button PNG not applied');
+            if (!s.hudBackground.includes('ui-hud-panel.png')) throw new Error('HUD PNG not applied');
+            if (report.errors.length) throw new Error(report.errors.join('\n'));
+          } catch (error) {
+            report.fatal = error?.stack || String(error);
+          } finally {
+            fs.writeFileSync('smoke-result.json', JSON.stringify(report, null, 2));
+            if (browser) await browser.close();
+          }
+          console.log(JSON.stringify(report, null, 2));
+          if (report.fatal) process.exit(1);
+          EOF
+          node smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: office-birds-all-assets
+          path: |
+            office-birds-all-assets.png
+            smoke-result.json
+            /tmp/office-birds-server.log
