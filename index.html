@@ -4,9 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Office Birds — Campaign</title>
-  <link rel="stylesheet" href="styles.css?v=rebuild-v2-clean" />
+  <link rel="stylesheet" href="styles.css?v=fast-assets-v2" />
 </head>
-<body>
+<body class="is-loading">
+  <section id="loadingScreen" class="loading-screen" aria-live="polite">
+    <div class="loading-card">
+      <strong>OFFICE BIRDS</strong>
+      <span id="loadingLabel">Подготовка графики…</span>
+      <div class="loading-track"><div id="loadingProgress" class="loading-bar"></div></div>
+    </div>
+  </section>
+
   <div class="app-shell">
     <header class="hud">
       <section class="hud-card hud-main">
@@ -65,14 +73,16 @@
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script src="src/art-layer.js?v=single-slingshot-v2"></script>
-  <script src="src/game.js?v=all-assets-v1"></script>
-  <script src="src/world-assets.js?v=all-assets-v1"></script>
-  <script src="src/remaining-assets.js?v=all-assets-v1"></script>
+  <script src="src/preloader.js?v=fast-assets-v2"></script>
+  <script src="src/art-layer.js?v=fast-assets-v2"></script>
+  <script src="src/game.js?v=fast-assets-v2"></script>
+  <script src="src/world-assets.js?v=fast-assets-v2"></script>
+  <script src="src/remaining-assets.js?v=fast-assets-v2"></script>
   <script>
     window.officeBirdsArt?.installGameplayOverrides();
     window.officeBirdsWorldAssets?.install();
     window.officeBirdsRemainingAssets?.install();
+    window.officeBirdsPreloader?.waitForAssets();
   </script>
 </body>
 </html>
