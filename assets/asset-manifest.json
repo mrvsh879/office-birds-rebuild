@@ -1,28 +1,25 @@
 {
-  "version": 1,
-  "generatedFor": "Office Birds",
+  "version": 2,
   "branch": "rebuild-v2-clean",
-  "atlases": {
-    "characters": {
-      "file": "assets/characters/office-birds-characters-atlas.webp",
-      "size": "1536x1024",
-      "contains": ["hero poses", "manager poses", "slingshot", "loaded slingshot"]
-    },
+  "status": "prepared-for-individual-assets",
+  "paths": {
+    "heroes": "assets/characters/heroes/",
+    "managers": "assets/characters/managers/",
+    "slingshots": "assets/props/slingshots/",
+    "officeProps": "assets/props/office/",
     "materials": {
-      "file": "assets/materials/office-birds-materials-atlas.svg",
-      "size": "512x341",
-      "contains": ["wood beams", "wood pillars", "glass", "metal", "concrete"]
-    },
-    "props": {
-      "file": "assets/props/office-birds-props-atlas.webp",
-      "size": "256x171",
-      "contains": ["filing cabinet", "desk", "bookcase", "monitors", "printer", "chairs", "plants", "boxes", "water cooler"]
+      "wood": "assets/materials/wood/",
+      "glass": "assets/materials/glass/",
+      "metal": "assets/materials/metal/",
+      "concrete": "assets/materials/concrete/"
     },
     "ui": {
-      "file": "assets/ui/office-birds-ui-atlas.webp",
-      "size": "256x171",
-      "contains": ["navy-gold panels", "buttons", "stars", "counters", "progress bar", "icons"]
-    }
+      "panels": "assets/ui/panels/",
+      "buttons": "assets/ui/buttons/",
+      "icons": "assets/ui/icons/"
+    },
+    "backgrounds": "assets/backgrounds/"
   },
-  "note": "These are source atlases for the next integration stages. Physics and src/game.js were not changed by this asset upload."
+  "temporaryCompatibilityAsset": "assets/sprites/office-birds-vectors.svg",
+  "note": "The compatibility atlas remains until individual PNG assets are uploaded and connected in src/game.js."
 }
